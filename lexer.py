@@ -15,7 +15,11 @@ except ImportError as exc:
 tokens = (
     'INT',
     'FLOAT',
+    'MAIN',
+    'PRINTF',
+    'PRINT',
     'ID',
+    'STRING',
     'NUMBER',
     'PLUS',
     'MINUS',
@@ -24,14 +28,20 @@ tokens = (
     'MODULO',
     'ASSIGN',
     'SEMICOLON',
+    'COMMA',
     'LPAREN',
     'RPAREN',
+    'LBRACE',
+    'RBRACE',
 )
 
 # Reserved keywords
 reserved = {
     'int': 'INT',
     'float': 'FLOAT',
+    'main': 'MAIN',
+    'printf': 'PRINTF',
+    'print': 'PRINT',
 }
 
 # Token rules (longer patterns first)
@@ -42,8 +52,11 @@ t_DIVIDE = r'/'
 t_MODULO = r'%'
 t_ASSIGN = r'='
 t_SEMICOLON = r';'
+t_COMMA = r','
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
+t_LBRACE = r'\{'
+t_RBRACE = r'\}'
 
 # Ignored characters (spaces and tabs)
 t_ignore = ' \t'
@@ -52,6 +65,11 @@ t_ignore = ' \t'
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+
+# Ignore C preprocessor lines like #include <stdio.h>
+def t_preprocessor(t):
+    r'\#[^\n]*'
+    pass
 
 # Identifier or reserved keyword
 def t_ID(t):
@@ -66,6 +84,12 @@ def t_NUMBER(t):
         t.value = float(t.value)
     else:
         t.value = int(t.value)
+    return t
+
+# Double-quoted string literal used by printf
+def t_STRING(t):
+    r'"([^"\\]|\\.)*"'
+    t.value = t.value[1:-1]
     return t
 
 # Error handling for invalid characters

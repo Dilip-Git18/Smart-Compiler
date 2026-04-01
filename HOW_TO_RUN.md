@@ -67,11 +67,22 @@ a = 5;
 b = a + 2;
 ```
 
-Not supported (full C features):
-- `#include`
-- `printf(...)`
-- `int main() { ... }`
-- Braces `{}` and function definitions
+Also supported (simple C-style wrapper):
+
+```c
+#include<stdio.h>
+int main(){
+  int a;
+  a = 5 + 2;
+  printf("hello");
+  printf("sum=%d", a);
+}
+```
+
+Not supported:
+- control flow (`if`, `while`, `for`)
+- functions other than `main`
+- arrays and pointers
 
 If you type full C code, the compiler will report unsupported characters/syntax.
 
@@ -93,6 +104,7 @@ cd /path/to/Mini-Compiler
 - 📄 Source code (line by line)
 - 🌳 Syntax tree visualization
 - 📊 Symbol table
+- 🧾 Program output (`printf`/`print`)
 - ✅ Success or ❌ Failure
 
 ---

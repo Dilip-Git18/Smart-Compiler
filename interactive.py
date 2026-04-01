@@ -5,6 +5,7 @@ Allows users to write and compile code interactively in the terminal
 
 from lexer import build_lexer
 from parser import parse, get_errors, get_symbol_table
+from executor import execute_program
 
 def print_banner():
     """Print welcome banner"""
@@ -124,16 +125,29 @@ def compile_and_show(code):
     # Print symbol table
     print()
     get_symbol_table().print_table()
+
+    runtime_errors = []
+    if ast:
+        runtime = execute_program(ast, get_symbol_table())
+        runtime_errors = runtime.runtime_errors
+        if runtime.output_lines:
+            print("\n🧾 Program Output:")
+            print("-" * 40)
+            for line in runtime.output_lines:
+                print(f"  {line}")
+            print("-" * 40)
     
     # Print results
     print()
-    if all_errors:
+    total_errors = all_errors + runtime_errors
+
+    if total_errors:
         print("❌ COMPILATION FAILED")
         print("-" * 60)
-        print(f"Errors: {len(all_errors)}")
-        for i, err in enumerate(all_errors, 1):
+        print(f"Errors: {len(total_errors)}")
+        for i, err in enumerate(total_errors, 1):
             print(f"  {i}. ✗ {err}")
-        print("\nTip: Use mini syntax like 'int a;' and 'a = 5 + 2;'.")
+        print("\nTip: Use declarations/assignments or simple main+printf syntax.")
         print("-" * 60)
         return False
     else:

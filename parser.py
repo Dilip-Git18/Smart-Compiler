@@ -54,6 +54,18 @@ class ASTNode:
             print(f"{prefix}🔢 NUMBER: {self.children[0]}")
         elif self.type == 'id':
             print(f"{prefix}🔤 VARIABLE: {self.children[0]}")
+        elif self.type == 'print':
+            print(f"{prefix}🖨️  PRINT")
+            arg = self.children[0] if self.children else None
+            if isinstance(arg, tuple) and arg[0] == 'string':
+                print(f"{prefix}  📝 STRING: {arg[1]}")
+            elif isinstance(arg, tuple) and arg[0] == 'format_expr':
+                print(f"{prefix}  📝 FORMAT: {arg[1]}")
+                expr = arg[2]
+                if hasattr(expr, 'print_tree'):
+                    expr.print_tree(indent + 1)
+            elif hasattr(arg, 'print_tree'):
+                arg.print_tree(indent + 1)
         
         # For program node, print children
         if self.type == 'program':
@@ -66,9 +78,11 @@ class ASTNode:
 # ============================================
 
 def p_program(p):
-    """program : statement_list"""
+    """program : statement_list
+               | INT MAIN LPAREN RPAREN LBRACE statement_list RBRACE"""
     node = ASTNode('program')
-    for stmt in p[1]:
+    statements = p[1] if len(p) == 2 else p[6]
+    for stmt in statements:
         if stmt:
             node.add_child(stmt)
     p[0] = node
@@ -86,7 +100,8 @@ def p_statement_list(p):
 
 def p_statement(p):
     """statement : declaration
-                 | assignment"""
+                 | assignment
+                 | print_stmt"""
     p[0] = p[1]
 
 def p_statement_error_recover(p):
@@ -140,6 +155,33 @@ def p_assignment_error_missing_semicolon(p):
     line = p.lineno(1)
     error_msg = f"Line {line}: Missing ';' after assignment"
     parser_errors.append(error_msg)
+    p[0] = None
+
+def p_print_stmt_string(p):
+    """print_stmt : PRINTF LPAREN STRING RPAREN SEMICOLON
+                  | PRINT LPAREN STRING RPAREN SEMICOLON"""
+    node = ASTNode('print')
+    node.add_child(('string', p[3]))
+    p[0] = node
+
+def p_print_stmt_expr(p):
+    """print_stmt : PRINTF LPAREN expression RPAREN SEMICOLON
+                  | PRINT LPAREN expression RPAREN SEMICOLON"""
+    node = ASTNode('print')
+    node.add_child(p[3])
+    p[0] = node
+
+def p_print_stmt_printf_format(p):
+    """print_stmt : PRINTF LPAREN STRING COMMA expression RPAREN SEMICOLON"""
+    node = ASTNode('print')
+    node.add_child(('format_expr', p[3], p[5]))
+    p[0] = node
+
+def p_print_stmt_error_missing_semicolon(p):
+    """print_stmt : PRINTF LPAREN expression RPAREN
+                  | PRINT LPAREN expression RPAREN"""
+    line = p.lineno(1)
+    parser_errors.append(f"Line {line}: Missing ';' after print statement")
     p[0] = None
 
 def p_expression_number(p):

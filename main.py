@@ -6,6 +6,7 @@ Main entry point with improved display and AST visualization
 import sys
 from lexer import build_lexer
 from parser import parse, get_errors, get_symbol_table
+from executor import execute_program
 
 def compile_file(filename):
     """
@@ -60,17 +61,30 @@ def compile_file(filename):
         # Print symbol table
         print()
         get_symbol_table().print_table()
+
+        runtime_errors = []
+        if ast:
+            runtime = execute_program(ast, get_symbol_table())
+            runtime_errors = runtime.runtime_errors
+            if runtime.output_lines:
+                print("\n🧾 Program Output:")
+                print("-" * 60)
+                for line in runtime.output_lines:
+                    print(f"  {line}")
+                print("-" * 60)
         
         # Print results
         print()
-        if all_errors:
+        total_errors = all_errors + runtime_errors
+
+        if total_errors:
             print("❌ COMPILATION FAILED")
             print("=" * 60)
-            print(f"Total Errors: {len(all_errors)}\n")
-            for i, err in enumerate(all_errors, 1):
+            print(f"Total Errors: {len(total_errors)}\n")
+            for i, err in enumerate(total_errors, 1):
                 print(f"  {i}. ✗ {err}")
-            print("\nTip: This compiler supports a mini C-like language, not full C.")
-            print("Supported forms: int/float declarations, assignments, and expressions.")
+            print("\nTip: Supported forms include declarations, assignments, expressions,")
+            print("and simple C-style 'int main(){...}' with printf/print statements.")
             print("=" * 60)
             return False
         else:
