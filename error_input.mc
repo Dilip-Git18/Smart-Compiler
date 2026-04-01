@@ -1,4 +1,7 @@
-int x
-x = 10;
-y = 5;
-int y;
+int a;
+a = 5
+int b;
+c = 10;
+int a;
+float x;
+x = 5 + b;

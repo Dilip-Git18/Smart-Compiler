@@ -4,7 +4,6 @@ Main entry point with improved display and AST visualization
 """
 
 import sys
-import os
 from lexer import build_lexer
 from parser import parse, get_errors, get_symbol_table
 
@@ -46,13 +45,17 @@ def compile_file(filename):
         # Combine all errors
         all_errors = lexer_errors + errors
         
-        # Show syntax tree if compilation successful
-        if ast and not all_errors:
+        # Show AST whenever parser can build one (even partial).
+        if ast:
             print("🌳 Syntax Tree (AST):")
             print("-" * 60)
             ast.print_tree()
             print("-" * 60)
             print()
+            if all_errors:
+                print("ℹ️  Showing partial AST. Fix errors for complete tree.\n")
+        elif all_errors:
+            print("ℹ️  Syntax Tree not generated due to syntax/lexical errors.\n")
         
         # Print symbol table
         print()
@@ -66,6 +69,8 @@ def compile_file(filename):
             print(f"Total Errors: {len(all_errors)}\n")
             for i, err in enumerate(all_errors, 1):
                 print(f"  {i}. ✗ {err}")
+            print("\nTip: This compiler supports a mini C-like language, not full C.")
+            print("Supported forms: int/float declarations, assignments, and expressions.")
             print("=" * 60)
             return False
         else:
@@ -90,22 +95,22 @@ def print_usage():
     print("=" * 60)
     print("\n📖 Usage:\n")
     print("  1. COMPILE A FILE:")
-    print("     python3 main.py <filename.mc>")
-    print("     Example: python3 main.py input.mc\n")
+    print("     ./.venv/bin/python main.py <filename.mc>")
+    print("     Example: ./.venv/bin/python main.py input.mc\n")
     print("  2. INTERACTIVE MODE:")
-    print("     python3 interactive.py")
+    print("     ./.venv/bin/python interactive.py")
     print("     Write code line by line in the terminal\n")
     print("  3. CREATE YOUR OWN CODE:")
     print("     Create a file with .mc extension")
-    print("     Then compile with: python3 main.py myfile.mc\n")
+    print("     Then compile with: ./.venv/bin/python main.py myfile.mc\n")
     print("=" * 60 + "\n")
 
 def main():
     """Main entry point"""
     if len(sys.argv) == 1:
         print_usage()
-        print("💡 Tip: Try running: python3 main.py input.mc")
-        print("   Or try interactive mode: python3 interactive.py\n")
+        print("💡 Tip: Try running: ./.venv/bin/python main.py input.mc")
+        print("   Or try interactive mode: ./.venv/bin/python interactive.py\n")
         sys.exit(0)
     elif len(sys.argv) == 2:
         filename = sys.argv[1]

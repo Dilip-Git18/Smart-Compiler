@@ -3,9 +3,15 @@ Parser for ClearCom - Mini C-like Smart Error Detecting Compiler
 Performs syntax analysis and semantic checking using PLY
 """
 
-import ply.yacc as yacc
+try:
+    import ply.yacc as yacc
+except ImportError as exc:
+    raise ImportError(
+        "PLY is not installed in the selected Python environment. "
+        "Install it with: python3 -m pip install ply"
+    ) from exc
 from lexer import tokens  # Import tokens from lexer
-from symbol_table import SymbolTable
+from symbol_table import SymbolTable    
 
 # Symbol table for semantic analysis
 symbol_table = SymbolTable()
@@ -83,6 +89,12 @@ def p_statement(p):
                  | assignment"""
     p[0] = p[1]
 
+def p_statement_error_recover(p):
+    """statement : error SEMICOLON"""
+    line = p.lineno(1)
+    parser_errors.append(f"Line {line}: Invalid statement skipped")
+    p[0] = None
+
 def p_declaration(p):
     """declaration : type ID SEMICOLON"""
     var_type = p[1]
@@ -116,7 +128,7 @@ def p_assignment(p):
     line = p.lineno(1)
     
     # Semantic check: variable must be declared
-    var_type = symbol_table.lookup(var_name, line)
+    symbol_table.lookup(var_name, line)
     
     node = ASTNode('assignment')
     node.add_child(var_name)
@@ -169,6 +181,8 @@ def p_error(p):
     if p:
         error_msg = f"Line {p.lineno}: Syntax error at '{p.value}'"
         parser_errors.append(error_msg)
+        # Allow parser to continue and build partial AST when possible.
+        yacc.errok()
     else:
         error_msg = "Syntax error at EOF"
         parser_errors.append(error_msg)

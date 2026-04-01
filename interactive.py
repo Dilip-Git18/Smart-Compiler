@@ -34,6 +34,8 @@ def print_help():
     print("  y = x * 2;")
     print("  result = (a + b) / 2;")
     print("\nOperators: + - * / %")
+    print("\nNote: This is a mini language, not full C.")
+    print("Not supported: #include, printf, function definitions, braces {}")
     print("-" * 60 + "\n")
 
 def get_user_input():
@@ -107,13 +109,17 @@ def compile_and_show(code):
     # Combine all errors
     all_errors = lexer_errors + errors
     
-    # Show syntax tree
-    if ast and not all_errors:
+    # Show AST whenever parser can build one (even partial).
+    if ast:
         print("🌳 Syntax Tree:")
         print("-" * 40)
         ast.print_tree()
         print("-" * 40)
         print()
+        if all_errors:
+            print("ℹ️  Showing partial AST. Fix errors for complete tree.\n")
+    elif all_errors:
+        print("ℹ️  Syntax Tree not generated due to syntax/lexical errors.\n")
     
     # Print symbol table
     print()
@@ -127,6 +133,7 @@ def compile_and_show(code):
         print(f"Errors: {len(all_errors)}")
         for i, err in enumerate(all_errors, 1):
             print(f"  {i}. ✗ {err}")
+        print("\nTip: Use mini syntax like 'int a;' and 'a = 5 + 2;'.")
         print("-" * 60)
         return False
     else:

@@ -1,9 +1,15 @@
 """
 Lexer for ClearCom - Mini C-like Smart Error Detecting Compiler
-Tokenizes the input code and identifies lexical elements
+Tokenizes the input code and identifies lexical elements.
 """
 
-import ply.lex as lex
+try:
+    import ply.lex as lex
+except ImportError as exc:
+    raise ImportError(
+        "PLY is not installed in the selected Python environment. "
+        "Install it with: python3 -m pip install ply"
+    ) from exc
 
 # List of token names (only tokens actually used in the language)
 tokens = (
@@ -64,17 +70,33 @@ def t_NUMBER(t):
 
 # Error handling for invalid characters
 def t_error(t):
-    error_msg = f"Line {t.lexer.lineno}: Invalid character '{t.value[0]}'"
-    print(error_msg)
-    t.lexer.errors = getattr(t.lexer, 'errors', [])
-    t.lexer.errors.append(error_msg)
-    t.lexer.skip(1)
+    line_no = t.lexer.lineno
+    line_errors = getattr(t.lexer, "line_errors", set())
+
+    # Report only once per line to avoid noisy cascaded errors.
+    if line_no not in line_errors:
+        ch = t.value[0]
+        error_msg = (
+            f"Line {line_no}: Unsupported character '{ch}'. "
+            "ClearCom supports only declarations, assignments, and expressions."
+        )
+        t.lexer.errors.append(error_msg)
+        line_errors.add(line_no)
+        t.lexer.line_errors = line_errors
+
+    # Skip the rest of the current line to avoid one error per character.
+    newline_pos = t.value.find("\n")
+    if newline_pos == -1:
+        t.lexer.skip(len(t.value))
+    else:
+        t.lexer.skip(newline_pos)
 
 # Build the lexer
 def build_lexer():
     """Build and return the lexer"""
     lexer = lex.lex()
     lexer.errors = []
+    lexer.line_errors = set()
     return lexer
 
 # Test the lexer
