@@ -1,5 +1,5 @@
 """
-Runtime executor for ClearCom AST.
+Runtime executor for parsed ClearCom statements.
 Evaluates statements and collects program output.
 """
 
@@ -15,19 +15,21 @@ def _eval_expr(node, values, symbols):
     if node is None:
         raise ValueError("Invalid expression")
 
-    if node.type == 'number':
-        return node.children[0]
+    kind = node[0]
 
-    if node.type == 'id':
-        name = node.children[0]
+    if kind == 'number':
+        return node[1]
+
+    if kind == 'id':
+        name = node[1]
         if name not in values:
             raise NameError(f"Variable '{name}' has no runtime value")
         return values[name]
 
-    if node.type == 'binop':
-        op = node.children[0]
-        left = _eval_expr(node.children[1], values, symbols)
-        right = _eval_expr(node.children[2], values, symbols)
+    if kind == 'binop':
+        op = node[1]
+        left = _eval_expr(node[2], values, symbols)
+        right = _eval_expr(node[3], values, symbols)
         if op == '+':
             return left + right
         if op == '-':
@@ -43,25 +45,25 @@ def _eval_expr(node, values, symbols):
     raise ValueError("Unknown expression node")
 
 
-def execute_program(ast, symbol_table):
-    """Execute AST and return output/value snapshots."""
+def execute_program(parsed_program, symbol_table):
+    """Execute parsed statements and return output/value snapshots."""
     result = RuntimeResult()
     values = {}
     symbols = symbol_table.symbols
 
-    if ast is None or ast.type != 'program':
+    if not parsed_program:
         return result
 
-    for stmt in ast.children:
+    for stmt in parsed_program:
         try:
-            if stmt.type == 'declaration':
-                var_type = stmt.children[0]
-                var_name = stmt.children[1]
+            if stmt[0] == 'declaration':
+                var_type = stmt[1]
+                var_name = stmt[2]
                 values[var_name] = 0 if var_type == 'int' else 0.0
 
-            elif stmt.type == 'assignment':
-                var_name = stmt.children[0]
-                expr = stmt.children[1]
+            elif stmt[0] == 'assignment':
+                var_name = stmt[1]
+                expr = stmt[2]
                 value = _eval_expr(expr, values, symbols)
 
                 var_type = symbols.get(var_name)
@@ -75,8 +77,8 @@ def execute_program(ast, symbol_table):
                 else:
                     values[var_name] = float(value)
 
-            elif stmt.type == 'print':
-                arg = stmt.children[0] if stmt.children else None
+            elif stmt[0] == 'print':
+                arg = stmt[1] if len(stmt) > 1 else None
                 if isinstance(arg, tuple) and arg[0] == 'string':
                     result.output_lines.append(arg[1])
                 elif isinstance(arg, tuple) and arg[0] == 'format_expr':
@@ -89,7 +91,8 @@ def execute_program(ast, symbol_table):
                     else:
                         result.output_lines.append(f"{fmt} {val}")
                 else:
-                    val = _eval_expr(arg, values, symbols)
+                    expr = arg[1] if isinstance(arg, tuple) and arg[0] == 'expr' else arg
+                    val = _eval_expr(expr, values, symbols)
                     result.output_lines.append(str(val))
 
         except Exception as exc:

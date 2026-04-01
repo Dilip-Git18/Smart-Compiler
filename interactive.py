@@ -99,7 +99,7 @@ def compile_and_show(code):
     
     # Parse code
     print("\n🔄 Compiling...\n")
-    ast = parse(code, lexer)
+    parsed_program = parse(code, lexer)
     
     # Check for lexer errors
     lexer_errors = lexer.errors
@@ -110,25 +110,13 @@ def compile_and_show(code):
     # Combine all errors
     all_errors = lexer_errors + errors
     
-    # Show AST whenever parser can build one (even partial).
-    if ast:
-        print("🌳 Syntax Tree:")
-        print("-" * 40)
-        ast.print_tree()
-        print("-" * 40)
-        print()
-        if all_errors:
-            print("ℹ️  Showing partial AST. Fix errors for complete tree.\n")
-    elif all_errors:
-        print("ℹ️  Syntax Tree not generated due to syntax/lexical errors.\n")
-    
     # Print symbol table
     print()
     get_symbol_table().print_table()
 
     runtime_errors = []
-    if ast:
-        runtime = execute_program(ast, get_symbol_table())
+    if parsed_program:
+        runtime = execute_program(parsed_program, get_symbol_table())
         runtime_errors = runtime.runtime_errors
         if runtime.output_lines:
             print("\n🧾 Program Output:")

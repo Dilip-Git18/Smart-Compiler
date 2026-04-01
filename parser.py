@@ -20,72 +20,14 @@ symbol_table = SymbolTable()
 parser_errors = []
 
 # ============================================
-# AST Node Classes
-# ============================================
-
-class ASTNode:
-    """Base AST node for syntax tree"""
-    def __init__(self, node_type):
-        self.type = node_type
-        self.children = []
-    
-    def add_child(self, child):
-        if child is not None:
-            self.children.append(child)
-    
-    def print_tree(self, indent=0):
-        """Print the AST in a tree format"""
-        prefix = "  " * indent
-        if self.type == 'program':
-            print(f"{prefix}📋 PROGRAM")
-        elif self.type == 'declaration':
-            print(f"{prefix}📝 DECLARATION: {self.children[1]} ({self.children[0]})")
-        elif self.type == 'assignment':
-            print(f"{prefix}➡️  ASSIGNMENT: {self.children[0]} =")
-            for i, child in enumerate(self.children[1:], 1):
-                if hasattr(child, 'print_tree'):
-                    child.print_tree(indent + 1)
-        elif self.type == 'binop':
-            print(f"{prefix}⚙️  OPERATOR: {self.children[0]}")
-            for child in self.children[1:]:
-                if hasattr(child, 'print_tree'):
-                    child.print_tree(indent + 1)
-        elif self.type == 'number':
-            print(f"{prefix}🔢 NUMBER: {self.children[0]}")
-        elif self.type == 'id':
-            print(f"{prefix}🔤 VARIABLE: {self.children[0]}")
-        elif self.type == 'print':
-            print(f"{prefix}🖨️  PRINT")
-            arg = self.children[0] if self.children else None
-            if isinstance(arg, tuple) and arg[0] == 'string':
-                print(f"{prefix}  📝 STRING: {arg[1]}")
-            elif isinstance(arg, tuple) and arg[0] == 'format_expr':
-                print(f"{prefix}  📝 FORMAT: {arg[1]}")
-                expr = arg[2]
-                if hasattr(expr, 'print_tree'):
-                    expr.print_tree(indent + 1)
-            elif hasattr(arg, 'print_tree'):
-                arg.print_tree(indent + 1)
-        
-        # For program node, print children
-        if self.type == 'program':
-            for child in self.children:
-                if hasattr(child, 'print_tree'):
-                    child.print_tree(indent + 1)
-
-# ============================================
 # Grammar Rules
 # ============================================
 
 def p_program(p):
     """program : statement_list
                | INT MAIN LPAREN RPAREN LBRACE statement_list RBRACE"""
-    node = ASTNode('program')
     statements = p[1] if len(p) == 2 else p[6]
-    for stmt in statements:
-        if stmt:
-            node.add_child(stmt)
-    p[0] = node
+    p[0] = [stmt for stmt in statements if stmt is not None]
 
 def p_statement_list(p):
     """statement_list : statement
@@ -119,10 +61,7 @@ def p_declaration(p):
     # Semantic check: declare variable
     symbol_table.declare(var_name, var_type, line)
     
-    node = ASTNode('declaration')
-    node.add_child(var_type)
-    node.add_child(var_name)
-    p[0] = node
+    p[0] = ('declaration', var_type, var_name)
 
 def p_declaration_error(p):
     """declaration : type ID"""
@@ -145,10 +84,7 @@ def p_assignment(p):
     # Semantic check: variable must be declared
     symbol_table.lookup(var_name, line)
     
-    node = ASTNode('assignment')
-    node.add_child(var_name)
-    node.add_child(expr)
-    p[0] = node
+    p[0] = ('assignment', var_name, expr)
 
 def p_assignment_error_missing_semicolon(p):
     """assignment : ID ASSIGN expression"""
@@ -160,22 +96,16 @@ def p_assignment_error_missing_semicolon(p):
 def p_print_stmt_string(p):
     """print_stmt : PRINTF LPAREN STRING RPAREN SEMICOLON
                   | PRINT LPAREN STRING RPAREN SEMICOLON"""
-    node = ASTNode('print')
-    node.add_child(('string', p[3]))
-    p[0] = node
+    p[0] = ('print', ('string', p[3]))
 
 def p_print_stmt_expr(p):
     """print_stmt : PRINTF LPAREN expression RPAREN SEMICOLON
                   | PRINT LPAREN expression RPAREN SEMICOLON"""
-    node = ASTNode('print')
-    node.add_child(p[3])
-    p[0] = node
+    p[0] = ('print', ('expr', p[3]))
 
 def p_print_stmt_printf_format(p):
     """print_stmt : PRINTF LPAREN STRING COMMA expression RPAREN SEMICOLON"""
-    node = ASTNode('print')
-    node.add_child(('format_expr', p[3], p[5]))
-    p[0] = node
+    p[0] = ('print', ('format_expr', p[3], p[5]))
 
 def p_print_stmt_error_missing_semicolon(p):
     """print_stmt : PRINTF LPAREN expression RPAREN
@@ -186,9 +116,7 @@ def p_print_stmt_error_missing_semicolon(p):
 
 def p_expression_number(p):
     """expression : NUMBER"""
-    node = ASTNode('number')
-    node.add_child(p[1])
-    p[0] = node
+    p[0] = ('number', p[1])
 
 def p_expression_id(p):
     """expression : ID"""
@@ -198,9 +126,7 @@ def p_expression_id(p):
     # Semantic check: variable must be declared
     symbol_table.lookup(var_name, line)
     
-    node = ASTNode('id')
-    node.add_child(var_name)
-    p[0] = node
+    p[0] = ('id', var_name)
 
 def p_expression_binop(p):
     """expression : expression PLUS expression
@@ -208,11 +134,7 @@ def p_expression_binop(p):
                   | expression TIMES expression
                   | expression DIVIDE expression
                   | expression MODULO expression"""
-    node = ASTNode('binop')
-    node.add_child(p[2])
-    node.add_child(p[1])
-    node.add_child(p[3])
-    p[0] = node
+    p[0] = ('binop', p[2], p[1], p[3])
 
 def p_expression_group(p):
     """expression : LPAREN expression RPAREN"""
@@ -223,7 +145,7 @@ def p_error(p):
     if p:
         error_msg = f"Line {p.lineno}: Syntax error at '{p.value}'"
         parser_errors.append(error_msg)
-        # Allow parser to continue and build partial AST when possible.
+        # Allow parser to continue and build partial parse results when possible.
         yacc.errok()
     else:
         error_msg = "Syntax error at EOF"
@@ -245,7 +167,7 @@ def parse(code, lexer):
         code: source code string
         lexer: lexer object
     Returns:
-        AST if successful, None if errors
+        Parsed statement list if successful, None if errors
     """
     global parser_errors, symbol_table
     
@@ -282,10 +204,10 @@ if __name__ == '__main__':
     """
     
     print("Parsing test code...")
-    ast = parse(test_code, lexer)
+    parsed_program = parse(test_code, lexer)
     
-    if ast:
-        print(f"AST: {ast}")
+    if parsed_program:
+        print(f"Parsed program: {parsed_program}")
     
     print("Symbol Table:")
     get_symbol_table().print_table()

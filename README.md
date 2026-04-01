@@ -1,13 +1,13 @@
 # ClearCom - Mini C-like Smart Error Detecting Compiler
 
 ClearCom is a beginner-friendly compiler built with Python and PLY (Lex/Yacc).
-It performs lexical analysis, parsing, semantic checks, and prints an AST.
+It performs lexical analysis, parsing, semantic checks, and runtime execution.
 
 ## Features
 
 - Lexer using PLY Lex
 - Parser using PLY Yacc
-- AST generation and tree printing
+- Parsed statement representation for execution
 - Symbol table for declarations and lookup
 - Smart error reporting with line numbers
 - Interactive mode and file mode
@@ -31,14 +31,6 @@ Not supported (full C features):
 - `printf(...)`
 - `int main() { ... }`
 - braces `{}` and function definitions
-
-## AST: Where It Is Created
-
-- AST node class: `parser.py` (`ASTNode`)
-- AST built in parser rules such as `p_program`, `p_declaration`, `p_assignment`
-- AST printed in `main.py` and `interactive.py` using `ast.print_tree()`
-
-AST is shown only when compilation succeeds with no errors.
 
 ## Project Structure
 
