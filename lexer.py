@@ -5,7 +5,7 @@ Tokenizes the input code and identifies lexical elements
 
 import ply.lex as lex
 
-# List of token names
+# List of token names (only tokens actually used in the language)
 tokens = (
     'INT',
     'FLOAT',
@@ -20,9 +20,6 @@ tokens = (
     'SEMICOLON',
     'LPAREN',
     'RPAREN',
-    'LBRACE',
-    'RBRACE',
-    'COMMA',
 )
 
 # Reserved keywords
@@ -41,9 +38,6 @@ t_ASSIGN = r'='
 t_SEMICOLON = r';'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_LBRACE = r'\{'
-t_RBRACE = r'\}'
-t_COMMA = r','
 
 # Ignored characters (spaces and tabs)
 t_ignore = ' \t'
