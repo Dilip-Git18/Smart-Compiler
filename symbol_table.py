@@ -9,6 +9,8 @@ class SymbolTable:
     """
     def __init__(self):
         self.symbols = {}  # {'var_name': 'int'/'float'}
+        self.declared_at = {}
+        self.read_usage = {}
         self.errors = []
     
     def declare(self, var_name, var_type, line):
@@ -25,6 +27,8 @@ class SymbolTable:
             return False
         
         self.symbols[var_name] = var_type
+        self.declared_at[var_name] = line
+        self.read_usage[var_name] = 0
         return True
     
     def lookup(self, var_name, line):
@@ -42,6 +46,22 @@ class SymbolTable:
             return None
         
         return self.symbols[var_name]
+
+    def mark_read(self, var_name):
+        """Mark variable as read in an expression/print context."""
+        if var_name in self.read_usage:
+            self.read_usage[var_name] += 1
+
+    def get_unused_warnings(self):
+        """Return warnings for declared but never-read variables."""
+        warnings = []
+        for var_name, count in self.read_usage.items():
+            if count == 0:
+                line = self.declared_at.get(var_name, "?")
+                warnings.append(
+                    f"Line {line}: Variable '{var_name}' is declared but never used"
+                )
+        return warnings
     
     def get_type(self, var_name):
         """Get the type of a declared variable"""

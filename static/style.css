@@ -1,12 +1,12 @@
 :root {
-  --bg-1: #f4efe6;
-  --bg-2: #d9ecdb;
-  --ink: #18261f;
-  --ink-soft: #30473d;
+  --bg-1: #f5f0e8;
+  --bg-2: #d4e4d6;
+  --ink: #11221b;
+  --ink-soft: #2e4a3f;
   --card: rgba(255, 255, 255, 0.82);
   --line: #adc8b5;
-  --accent: #0e7c59;
-  --accent-2: #ff7f3f;
+  --accent: #0a7a56;
+  --accent-2: #d46b32;
   --good: #0f8d60;
   --bad: #c22f2f;
   --idle: #8f7a4f;
@@ -37,7 +37,7 @@ body {
 .layout {
   position: relative;
   z-index: 1;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
   animation: fade-in 450ms ease-out;
@@ -71,7 +71,7 @@ h1 {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 1rem;
   margin-top: 1.2rem;
 }
@@ -88,7 +88,7 @@ h1 {
   border-radius: 18px;
   background: var(--card);
   backdrop-filter: blur(4px);
-  box-shadow: 0 12px 28px rgba(36, 53, 43, 0.08);
+  box-shadow: 0 12px 28px rgba(21, 44, 33, 0.1);
   padding: 1rem;
 }
 
@@ -115,6 +115,21 @@ h1 {
   flex-wrap: wrap;
   gap: 0.55rem;
   margin-bottom: 0.7rem;
+}
+
+.trace-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.trace-toggle input {
+  margin: 0;
 }
 
 button,
@@ -161,6 +176,11 @@ pre {
   overflow-wrap: break-word;
 }
 
+pre {
+  max-height: 280px;
+  overflow: auto;
+}
+
 textarea {
   min-height: 355px;
   resize: vertical;
@@ -201,6 +221,55 @@ textarea {
 
 .full-span {
   grid-column: 1 / -1;
+}
+
+.ast-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.ast-toggle {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.small-btn {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.small-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.mermaid-box {
+  margin-top: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.8rem;
+  min-height: 180px;
+  overflow: auto;
+}
+
+.hidden {
+  display: none;
+}
+
+.stage-ok {
+  color: var(--good);
+}
+
+.stage-failed {
+  color: var(--bad);
+}
+
+.stage-skipped {
+  color: var(--idle);
 }
 
 @keyframes fade-in {

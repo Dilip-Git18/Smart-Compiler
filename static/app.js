@@ -2,21 +2,37 @@ const sourceInput = document.getElementById("sourceInput");
 const compileBtn = document.getElementById("compileBtn");
 const clearBtn = document.getElementById("clearBtn");
 const exampleBtn = document.getElementById("exampleBtn");
+const formatBtn = document.getElementById("formatBtn");
 const fileUpload = document.getElementById("fileUpload");
+const traceMode = document.getElementById("traceMode");
 
 const statusBadge = document.getElementById("statusBadge");
+const stageBox = document.getElementById("stageBox");
 const outputBox = document.getElementById("outputBox");
 const errorBox = document.getElementById("errorBox");
+const warningBox = document.getElementById("warningBox");
+const traceBox = document.getElementById("traceBox");
 const symbolBox = document.getElementById("symbolBox");
 const tokenBox = document.getElementById("tokenBox");
 const astBox = document.getElementById("astBox");
+const irBox = document.getElementById("irBox");
+const astDiagram = document.getElementById("astDiagram");
+const astRawBtn = document.getElementById("astRawBtn");
+const astDiagramBtn = document.getElementById("astDiagramBtn");
+
+let currentAstMermaid = "";
+let astMode = "raw";
 
 const EXAMPLE_CODE = `int total;
 float tax;
 total = 100;
 tax = total * 0.18;
 printf("total=%d", total);
-print(tax);`;
+print("tax=", tax);`;
+
+if (window.mermaid) {
+  window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
+}
 
 function setBadge(label, mode) {
   statusBadge.textContent = label;
@@ -45,6 +61,60 @@ function renderAst(ast) {
   return JSON.stringify(ast, null, 2);
 }
 
+function renderStages(stages) {
+  if (!stages || !stages.length) {
+    return "No stage data yet.";
+  }
+
+  return stages
+    .map((s, i) => `${i + 1}. ${s.name} [${String(s.status).toUpperCase()}]\n   ${s.detail}`)
+    .join("\n\n");
+}
+
+function renderIr(ir) {
+  if (!ir || !ir.length) {
+    return "No IR generated.";
+  }
+  return ir.map((line, idx) => `${idx + 1}. ${line}`).join("\n");
+}
+
+function renderWarnings(warnings) {
+  if (!warnings || !warnings.length) {
+    return "No warnings.";
+  }
+  return warnings.map((w, i) => `${i + 1}. ${w}`).join("\n");
+}
+
+function renderTrace(trace) {
+  if (!trace || !trace.length) {
+    return "Trace is empty.";
+  }
+  return trace.map((step, i) => `[Step ${i + 1}] ${step}`).join("\n");
+}
+
+async function renderAstDiagram(markup) {
+  if (!markup || !window.mermaid) {
+    astDiagram.textContent = "No AST diagram available.";
+    return;
+  }
+
+  try {
+    const id = `ast-${Date.now()}`;
+    const result = await window.mermaid.render(id, markup);
+    astDiagram.innerHTML = result.svg;
+  } catch (error) {
+    astDiagram.textContent = `Failed to render AST diagram: ${error.message}`;
+  }
+}
+
+function syncAstMode() {
+  const showRaw = astMode === "raw";
+  astBox.classList.toggle("hidden", !showRaw);
+  astDiagram.classList.toggle("hidden", showRaw);
+  astRawBtn.classList.toggle("active", showRaw);
+  astDiagramBtn.classList.toggle("active", !showRaw);
+}
+
 function renderDiagnostics(diagnostics) {
   if (!diagnostics || !diagnostics.length) {
     return "No errors.";
@@ -60,12 +130,16 @@ function renderDiagnostics(diagnostics) {
 
 function buildOutputSummary(result) {
   const astCount = Array.isArray(result.ast) ? result.ast.length : 0;
+  const runtimeEntries = Object.entries(result.runtimeValues || {});
+  const runtimeState = runtimeEntries.length
+    ? runtimeEntries.map(([k, v]) => `${k} = ${v}`).join("\n")
+    : "No tracked variables.";
 
   if (result.success) {
     const runtimeOutput = (result.output && result.output.length)
       ? result.output.join("\n")
       : "No runtime output.";
-    return `Compilation successful.\nStatements parsed: ${astCount}\n\nRuntime Output:\n${runtimeOutput}`;
+    return `Compilation successful.\nStatements parsed: ${astCount}\n\nRuntime Output:\n${runtimeOutput}\n\nFinal Variable Values:\n${runtimeState}`;
   }
 
   const hints = [...new Set((result.diagnostics || []).map((d) => d.hint))];
@@ -76,19 +150,27 @@ function buildOutputSummary(result) {
   return `Compilation failed.\nStatements parsed before error: ${astCount}\n\nHow to solve:\n${hintBlock}`;
 }
 
-function renderCompileResult(result) {
+async function renderCompileResult(result) {
   if (result.success) {
     setBadge("Success", "success");
   } else {
     setBadge("Failed", "error");
   }
 
+  stageBox.textContent = renderStages(result.stages || []);
   outputBox.textContent = buildOutputSummary(result);
   errorBox.textContent = renderDiagnostics(result.diagnostics || []);
+  warningBox.textContent = renderWarnings(result.warnings || []);
+  traceBox.textContent = renderTrace(result.trace || []);
 
   symbolBox.textContent = renderSymbols(result.symbols);
   tokenBox.textContent = renderTokens(result.tokens);
   astBox.textContent = renderAst(result.ast);
+  irBox.textContent = renderIr(result.ir);
+
+  currentAstMermaid = result.astMermaid || "";
+  await renderAstDiagram(currentAstMermaid);
+  syncAstMode();
 }
 
 async function compileSource() {
@@ -107,7 +189,7 @@ async function compileSource() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ source }),
+      body: JSON.stringify({ source, trace: traceMode.checked }),
     });
 
     const result = await response.json();
@@ -118,23 +200,56 @@ async function compileSource() {
       return;
     }
 
-    renderCompileResult(result);
+    await renderCompileResult(result);
   } catch (error) {
     setBadge("Failed", "error");
     errorBox.textContent = `Request error: ${error.message}`;
   }
 }
 
+async function formatSource() {
+  const source = sourceInput.value;
+  if (!source.trim()) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/format", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ source }),
+    });
+
+    const result = await response.json();
+    if (response.ok && result.formatted) {
+      sourceInput.value = result.formatted;
+    }
+  } catch (error) {
+    errorBox.textContent = `Format error: ${error.message}`;
+  }
+}
+
 compileBtn.addEventListener("click", compileSource);
+formatBtn.addEventListener("click", formatSource);
 
 clearBtn.addEventListener("click", () => {
   sourceInput.value = "";
   setBadge("Idle", "idle");
+  stageBox.textContent = "No stage data yet.";
   outputBox.textContent = "No output yet.";
   errorBox.textContent = "No errors.";
+  warningBox.textContent = "No warnings.";
+  traceBox.textContent = "Trace is empty.";
   symbolBox.textContent = "No symbols yet.";
   tokenBox.textContent = "No tokens yet.";
   astBox.textContent = "No AST yet.";
+  irBox.textContent = "No IR yet.";
+  astDiagram.textContent = "No AST diagram yet.";
+  currentAstMermaid = "";
+  astMode = "raw";
+  syncAstMode();
 });
 
 exampleBtn.addEventListener("click", () => {
@@ -152,4 +267,15 @@ fileUpload.addEventListener("change", (event) => {
     sourceInput.value = String(e.target.result || "");
   };
   reader.readAsText(file);
+});
+
+astRawBtn.addEventListener("click", () => {
+  astMode = "raw";
+  syncAstMode();
+});
+
+astDiagramBtn.addEventListener("click", async () => {
+  astMode = "diagram";
+  syncAstMode();
+  await renderAstDiagram(currentAstMermaid);
 });

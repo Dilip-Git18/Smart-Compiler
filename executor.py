@@ -9,6 +9,7 @@ class RuntimeResult:
         self.output_lines = []
         self.runtime_errors = []
         self.values = {}
+        self.trace_lines = []
 
 
 def _eval_expr(node, values, symbols):
@@ -37,8 +38,12 @@ def _eval_expr(node, values, symbols):
         if op == '*':
             return left * right
         if op == '/':
+            if right == 0:
+                raise ZeroDivisionError("Division by zero")
             return left / right
         if op == '%':
+            if right == 0:
+                raise ZeroDivisionError("Modulo by zero")
             return left % right
         if op == '<':
             return 1 if left < right else 0
@@ -57,7 +62,7 @@ def _eval_expr(node, values, symbols):
     raise ValueError("Unknown expression node")
 
 
-def execute_program(parsed_program, symbol_table):
+def execute_program(parsed_program, symbol_table, trace=False):
     """Execute parsed statements and return output/value snapshots."""
     result = RuntimeResult()
     values = {}
@@ -78,6 +83,9 @@ def execute_program(parsed_program, symbol_table):
         else:
             values[var_name] = float(value)
 
+        if trace:
+            result.trace_lines.append(f"assign {var_name} = {values[var_name]}")
+
     def _truthy(expr):
         return _eval_expr(expr, values, symbols) != 0
 
@@ -95,6 +103,8 @@ def execute_program(parsed_program, symbol_table):
             var_type = stmt[1]
             var_name = stmt[2]
             values[var_name] = 0 if var_type == 'int' else 0.0
+            if trace:
+                result.trace_lines.append(f"declare {var_type} {var_name} = {values[var_name]}")
             return
 
         if kind == 'assignment':
@@ -103,7 +113,10 @@ def execute_program(parsed_program, symbol_table):
 
         if kind == 'if':
             _, cond, then_stmt, else_stmt = stmt
-            if _truthy(cond):
+            cond_val = _eval_expr(cond, values, symbols)
+            if trace:
+                result.trace_lines.append(f"if cond={cond_val}")
+            if cond_val != 0:
                 _exec_statement(then_stmt)
             elif else_stmt is not None:
                 _exec_statement(else_stmt)
@@ -112,7 +125,9 @@ def execute_program(parsed_program, symbol_table):
         if kind == 'while':
             _, cond, body = stmt
             loop_guard = 0
-            while _truthy(cond):
+            while _eval_expr(cond, values, symbols) != 0:
+                if trace:
+                    result.trace_lines.append(f"while iter={loop_guard + 1}")
                 _exec_statement(body)
                 loop_guard += 1
                 if loop_guard > 100000:
@@ -128,6 +143,8 @@ def execute_program(parsed_program, symbol_table):
             while True:
                 if cond is not None and not _truthy(cond):
                     break
+                if trace:
+                    result.trace_lines.append(f"for iter={loop_guard + 1}")
                 _exec_statement(body)
                 if update is not None:
                     _exec_statement(update)
@@ -139,20 +156,38 @@ def execute_program(parsed_program, symbol_table):
         if kind == 'print':
             arg = stmt[1] if len(stmt) > 1 else None
             if isinstance(arg, tuple) and arg[0] == 'string':
-                result.output_lines.append(arg[1])
+                line = arg[1]
+                result.output_lines.append(line)
+                if trace:
+                    result.trace_lines.append(f"print {line}")
             elif isinstance(arg, tuple) and arg[0] == 'format_expr':
                 fmt = arg[1]
                 val = _eval_expr(arg[2], values, symbols)
                 if '%d' in fmt:
-                    result.output_lines.append(fmt.replace('%d', str(int(val))))
+                    line = fmt.replace('%d', str(int(val)))
+                    result.output_lines.append(line)
                 elif '%f' in fmt:
-                    result.output_lines.append(fmt.replace('%f', str(float(val))))
+                    line = fmt.replace('%f', str(float(val)))
+                    result.output_lines.append(line)
                 else:
-                    result.output_lines.append(f"{fmt} {val}")
+                    line = f"{fmt} {val}"
+                    result.output_lines.append(line)
+                if trace:
+                    result.trace_lines.append(f"print {line}")
+            elif isinstance(arg, tuple) and arg[0] == 'label_expr':
+                label = arg[1]
+                val = _eval_expr(arg[2], values, symbols)
+                line = f"{label}{val}"
+                result.output_lines.append(line)
+                if trace:
+                    result.trace_lines.append(f"print {line}")
             else:
                 expr = arg[1] if isinstance(arg, tuple) and arg[0] == 'expr' else arg
                 val = _eval_expr(expr, values, symbols)
-                result.output_lines.append(str(val))
+                line = str(val)
+                result.output_lines.append(line)
+                if trace:
+                    result.trace_lines.append(f"print {line}")
             return
 
         raise ValueError(f"Unknown statement kind '{kind}'")

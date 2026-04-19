@@ -13,6 +13,17 @@ C) Web UI mode:
    ./.venv/bin/python web_app.py
    Open browser: http://127.0.0.1:5000
 
+Web UI now shows real compiler stages:
+- Lexical Analysis
+- Syntax Parsing
+- Semantic Analysis
+- IR Generation
+- Execution
+
+Web UI also supports AST view modes:
+- Raw AST (JSON-like)
+- Diagram mode (Mermaid AST graph)
+
 
 2) WHAT PROGRAMS CAN RUN
 -------------------------------------
@@ -47,6 +58,27 @@ Supported features:
 - if/else statements
 - while loops
 - for loops
+
+Compiler internals exposed in web output:
+- Token stream from lexer
+- AST from parser
+- Symbol table from semantic analysis
+- Intermediate Representation (IR)
+- Runtime output from execution engine
+
+Advanced features now included:
+- Smart error suggestions with fix hints
+- Keyword typo warning suggestions (example: innt -> int)
+- Execution trace mode (Web UI Trace checkbox)
+- Symbol table viewer with runtime values
+- Unused-variable warnings
+- Runtime error handling (division/modulo by zero)
+- Colored terminal output in CLI compiler mode
+- Code formatter (Web UI "Format Code" button)
+- Constant folding for compile-time numeric expressions
+
+All executable examples are available in:
+  EXECUTABLE_EXAMPLES.txt
 
 Control-flow examples:
     int a = 5;

@@ -3,6 +3,8 @@ Lexer for ClearCom - Mini C-like Smart Error Detecting Compiler
 Tokenizes the input code and identifies lexical elements.
 """
 
+import difflib
+
 try:
     import ply.lex as lex
 except ImportError as exc:
@@ -92,6 +94,18 @@ def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
+
+# Ignore // single-line comments
+def t_comment_singleline(t):
+    r'//[^\n]*'
+    pass
+
+
+# Ignore /* ... */ block comments and keep line counting correct
+def t_comment_block(t):
+    r'/\*[^*]*\*+(?:[^/*][^*]*\*+)*/'
+    t.lexer.lineno += t.value.count("\n")
+
 # Ignore C preprocessor lines like #include <stdio.h>
 def t_preprocessor(t):
     r'\#[^\n]*'
@@ -101,6 +115,20 @@ def t_preprocessor(t):
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value, 'ID')  # Check if it's a reserved word
+
+    if t.type == 'ID':
+        suggestion = difflib.get_close_matches(t.value, list(reserved.keys()), n=1, cutoff=0.8)
+        if suggestion:
+            msg = (
+                f"Line {t.lineno}: Possible keyword typo '{t.value}'. "
+                f"Did you mean '{suggestion[0]}'?"
+            )
+            seen = getattr(t.lexer, "warning_keys", set())
+            key = (t.lineno, t.value)
+            if key not in seen:
+                t.lexer.warnings.append(msg)
+                seen.add(key)
+                t.lexer.warning_keys = seen
     return t
 
 # Number (integer or float)
@@ -146,6 +174,8 @@ def build_lexer():
     """Build and return the lexer"""
     lexer = lex.lex()
     lexer.errors = []
+    lexer.warnings = []
+    lexer.warning_keys = set()
     lexer.line_errors = set()
     return lexer
 

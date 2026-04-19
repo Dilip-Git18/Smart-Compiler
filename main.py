@@ -4,9 +4,14 @@ Main entry point with improved display
 """
 
 import sys
-from lexer import build_lexer
-from parser import parse, get_errors, get_symbol_table
-from executor import execute_program
+from compiler_service import compile_source
+
+
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
+RESET = "\033[0m"
 
 def compile_file(filename):
     """
@@ -30,53 +35,45 @@ def compile_file(filename):
             print(f"  {i} │ {line}")
         print("-" * 60 + "\n")
         
-        # Build lexer
-        lexer = build_lexer()
-        
-        # Parse the code
         print("🔄 Compiling...\n")
-        parsed_program = parse(source_code, lexer)
-        
-        # Check for lexer errors
-        lexer_errors = lexer.errors
-        
-        # Get parser and semantic errors
-        errors = get_errors()
-        
-        # Combine all errors
-        all_errors = lexer_errors + errors
-        
-        # Print symbol table
-        print()
-        get_symbol_table().print_table()
+        result = compile_source(source_code, trace=False)
 
-        runtime_errors = []
-        if parsed_program:
-            runtime = execute_program(parsed_program, get_symbol_table())
-            runtime_errors = runtime.runtime_errors
-            if runtime.output_lines:
-                print("\n🧾 Program Output:")
-                print("-" * 60)
-                for line in runtime.output_lines:
-                    print(f"  {line}")
-                print("-" * 60)
-        
-        # Print results
-        print()
-        total_errors = all_errors + runtime_errors
+        print(f"{CYAN}Symbol Table:{RESET}")
+        print("-" * 60)
+        if result["symbols"]:
+            for name, typ in result["symbols"].items():
+                value = result.get("runtimeValues", {}).get(name)
+                print(f"  {name:15} : {typ:5} value={value}")
+        else:
+            print("  Empty")
+        print("-" * 60)
+
+        if result["output"]:
+            print(f"\n{CYAN}🧾 Program Output:{RESET}")
+            print("-" * 60)
+            for line in result["output"]:
+                print(f"  {line}")
+            print("-" * 60)
+
+        if result.get("warnings"):
+            print(f"\n{YELLOW}⚠ Warnings ({len(result['warnings'])}):{RESET}")
+            for i, warn in enumerate(result["warnings"], 1):
+                print(f"  {i}. {warn}")
+
+        total_errors = result["errors"]
 
         if total_errors:
-            print("❌ COMPILATION FAILED")
+            print(f"{RED}❌ COMPILATION FAILED{RESET}")
             print("=" * 60)
             print(f"Total Errors: {len(total_errors)}\n")
             for i, err in enumerate(total_errors, 1):
-                print(f"  {i}. ✗ {err}")
+                print(f"  {RED}{i}. ✗ {err}{RESET}")
             print("\nTip: Supported forms include declarations, assignments, expressions,")
             print("and simple C-style 'int main(){...}' with printf/print statements.")
             print("=" * 60)
             return False
         else:
-            print("✅ COMPILATION SUCCESSFUL")
+            print(f"{GREEN}✅ COMPILATION SUCCESSFUL{RESET}")
             print("=" * 60)
             print("No errors found! Code is valid.")
             print("=" * 60)

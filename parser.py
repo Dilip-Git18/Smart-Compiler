@@ -249,6 +249,19 @@ def p_print_stmt_printf_format_addr(p):
     symbol_table.lookup(var_name, line)
     p[0] = ('print', ('format_expr', p[3], ('id', var_name)))
 
+
+def p_print_stmt_print_label_expr(p):
+    """print_stmt : PRINT LPAREN STRING COMMA expression RPAREN SEMICOLON"""
+    p[0] = ('print', ('label_expr', p[3], p[5]))
+
+
+def p_print_stmt_print_label_expr_addr(p):
+    """print_stmt : PRINT LPAREN STRING COMMA AMP ID RPAREN SEMICOLON"""
+    var_name = p[6]
+    line = p.lineno(6)
+    symbol_table.lookup(var_name, line)
+    p[0] = ('print', ('label_expr', p[3], ('id', var_name)))
+
 def p_print_stmt_error_missing_semicolon(p):
     """print_stmt : PRINTF LPAREN expression RPAREN
                   | PRINT LPAREN expression RPAREN"""
@@ -315,6 +328,7 @@ def p_expression_id(p):
     
     # Semantic check: variable must be declared
     symbol_table.lookup(var_name, line)
+    symbol_table.mark_read(var_name)
     
     p[0] = ('id', var_name)
 
@@ -330,7 +344,54 @@ def p_expression_binop(p):
                   | expression GE expression
                   | expression EQ expression
                   | expression NE expression"""
-    p[0] = ('binop', p[2], p[1], p[3])
+    left = p[1]
+    right = p[3]
+    op = p[2]
+
+    # Constant folding for compile-time numeric expressions.
+    if left[0] == 'number' and right[0] == 'number':
+        lval = left[1]
+        rval = right[1]
+        try:
+            if op == '+':
+                p[0] = ('number', lval + rval)
+                return
+            if op == '-':
+                p[0] = ('number', lval - rval)
+                return
+            if op == '*':
+                p[0] = ('number', lval * rval)
+                return
+            if op == '/':
+                if rval != 0:
+                    p[0] = ('number', lval / rval)
+                    return
+            if op == '%':
+                if rval != 0:
+                    p[0] = ('number', lval % rval)
+                    return
+            if op == '<':
+                p[0] = ('number', 1 if lval < rval else 0)
+                return
+            if op == '<=':
+                p[0] = ('number', 1 if lval <= rval else 0)
+                return
+            if op == '>':
+                p[0] = ('number', 1 if lval > rval else 0)
+                return
+            if op == '>=':
+                p[0] = ('number', 1 if lval >= rval else 0)
+                return
+            if op == '==':
+                p[0] = ('number', 1 if lval == rval else 0)
+                return
+            if op == '!=':
+                p[0] = ('number', 1 if lval != rval else 0)
+                return
+        except Exception:
+            pass
+
+    p[0] = ('binop', op, left, right)
 
 def p_expression_group(p):
     """expression : LPAREN expression RPAREN"""
