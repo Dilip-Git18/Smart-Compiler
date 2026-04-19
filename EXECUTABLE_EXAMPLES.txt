@@ -111,11 +111,23 @@ while (n < 3) {
 }
 
 ----------------------------------------
-12) SMART WARNINGS DEMO (KEYWORD TYPO + UNUSED VARIABLE)
+12) ERROR DETECTION DEMO (KEYWORD TYPO)
 ----------------------------------------
 innt a;        // typo warning suggestion: int
 int b;
 b = 5;         // if b is never read later, unused warning can appear
+
+Expected: compile error "Unknown type name 'innt'" plus typo suggestion.
+
+----------------------------------------
+12B) WARNING-ONLY DEMO (UNUSED VARIABLE)
+----------------------------------------
+int a;
+int b;
+b = 5;
+print("b=", b);
+
+Expected: successful compile with warning for unused variable 'a'.
 
 ----------------------------------------
 13) RUNTIME ERROR HANDLING DEMO

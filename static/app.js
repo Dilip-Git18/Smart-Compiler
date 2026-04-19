@@ -5,6 +5,7 @@ const exampleBtn = document.getElementById("exampleBtn");
 const formatBtn = document.getElementById("formatBtn");
 const fileUpload = document.getElementById("fileUpload");
 const traceMode = document.getElementById("traceMode");
+const lineNumbers = document.getElementById("lineNumbers");
 
 const statusBadge = document.getElementById("statusBadge");
 const stageBox = document.getElementById("stageBox");
@@ -37,6 +38,35 @@ if (window.mermaid) {
 function setBadge(label, mode) {
   statusBadge.textContent = label;
   statusBadge.className = `badge ${mode}`;
+}
+
+function updateLineNumbers() {
+  const lineCount = Math.max(1, (sourceInput.value.match(/\n/g) || []).length + 1);
+  const nums = [];
+  for (let i = 1; i <= lineCount; i += 1) {
+    nums.push(String(i));
+  }
+  lineNumbers.textContent = nums.join("\n");
+}
+
+function resizeEditor() {
+  sourceInput.style.height = "auto";
+  lineNumbers.style.height = "auto";
+
+  const nextHeight = Math.max(sourceInput.scrollHeight, 420);
+  sourceInput.style.height = `${nextHeight}px`;
+  lineNumbers.style.height = `${nextHeight}px`;
+}
+
+function setEditorValue(value) {
+  sourceInput.value = value;
+  updateLineNumbers();
+  resizeEditor();
+  syncLineNumberScroll();
+}
+
+function syncLineNumberScroll() {
+  lineNumbers.scrollTop = sourceInput.scrollTop;
 }
 
 function renderSymbols(symbols) {
@@ -123,7 +153,11 @@ function renderDiagnostics(diagnostics) {
   return diagnostics
     .map((d, i) => {
       const lineText = d.line ? `Line ${d.line}` : "Unknown line";
-      return `${i + 1}. [${d.category}] ${lineText}\nIssue: ${d.message}\nFix: ${d.hint}`;
+      const colText = d.col ? `, Col ${d.col}` : "";
+      const codeFrame = d.codeLine
+        ? `\nCode: ${d.codeLine}\n      ${d.pointer || "^"}`
+        : "";
+      return `${i + 1}. [${d.category}] ${lineText}${colText}\nIssue: ${d.message}${codeFrame}\nFix: ${d.hint}`;
     })
     .join("\n\n");
 }
@@ -142,7 +176,7 @@ function buildOutputSummary(result) {
     return `Compilation successful.\nStatements parsed: ${astCount}\n\nRuntime Output:\n${runtimeOutput}\n\nFinal Variable Values:\n${runtimeState}`;
   }
 
-  const hints = [...new Set((result.diagnostics || []).map((d) => d.hint))];
+  const hints = [...new Set((result.errorDiagnostics || result.diagnostics || []).map((d) => d.hint))];
   const hintBlock = hints.length
     ? hints.map((h, i) => `${i + 1}. ${h}`).join("\n")
     : "1. Check syntax and variable declarations.";
@@ -159,8 +193,8 @@ async function renderCompileResult(result) {
 
   stageBox.textContent = renderStages(result.stages || []);
   outputBox.textContent = buildOutputSummary(result);
-  errorBox.textContent = renderDiagnostics(result.diagnostics || []);
-  warningBox.textContent = renderWarnings(result.warnings || []);
+  errorBox.textContent = renderDiagnostics(result.errorDiagnostics || result.diagnostics || []);
+  warningBox.textContent = renderDiagnostics(result.warningDiagnostics || []);
   traceBox.textContent = renderTrace(result.trace || []);
 
   symbolBox.textContent = renderSymbols(result.symbols);
@@ -224,7 +258,7 @@ async function formatSource() {
 
     const result = await response.json();
     if (response.ok && result.formatted) {
-      sourceInput.value = result.formatted;
+      setEditorValue(result.formatted);
     }
   } catch (error) {
     errorBox.textContent = `Format error: ${error.message}`;
@@ -234,8 +268,35 @@ async function formatSource() {
 compileBtn.addEventListener("click", compileSource);
 formatBtn.addEventListener("click", formatSource);
 
+sourceInput.addEventListener("input", updateLineNumbers);
+sourceInput.addEventListener("scroll", syncLineNumberScroll);
+sourceInput.addEventListener("input", () => {
+  updateLineNumbers();
+  resizeEditor();
+});
+sourceInput.addEventListener("keyup", () => {
+  updateLineNumbers();
+  resizeEditor();
+});
+sourceInput.addEventListener("change", () => {
+  updateLineNumbers();
+  resizeEditor();
+});
+sourceInput.addEventListener("paste", () => setTimeout(() => {
+  updateLineNumbers();
+  resizeEditor();
+}, 0));
+sourceInput.addEventListener("cut", () => setTimeout(() => {
+  updateLineNumbers();
+  resizeEditor();
+}, 0));
+sourceInput.addEventListener("drop", () => setTimeout(() => {
+  updateLineNumbers();
+  resizeEditor();
+}, 0));
+
 clearBtn.addEventListener("click", () => {
-  sourceInput.value = "";
+  setEditorValue("");
   setBadge("Idle", "idle");
   stageBox.textContent = "No stage data yet.";
   outputBox.textContent = "No output yet.";
@@ -253,7 +314,7 @@ clearBtn.addEventListener("click", () => {
 });
 
 exampleBtn.addEventListener("click", () => {
-  sourceInput.value = EXAMPLE_CODE;
+  setEditorValue(EXAMPLE_CODE);
 });
 
 fileUpload.addEventListener("change", (event) => {
@@ -264,7 +325,7 @@ fileUpload.addEventListener("change", (event) => {
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    sourceInput.value = String(e.target.result || "");
+    setEditorValue(String(e.target.result || ""));
   };
   reader.readAsText(file);
 });
@@ -279,3 +340,6 @@ astDiagramBtn.addEventListener("click", async () => {
   syncAstMode();
   await renderAstDiagram(currentAstMermaid);
 });
+
+updateLineNumbers();
+resizeEditor();

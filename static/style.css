@@ -186,12 +186,58 @@ textarea {
   resize: vertical;
 }
 
+.editor-shell {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 252, 249, 0.96));
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  align-items: stretch;
+}
+
+.line-numbers {
+  margin: 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.8rem 0.55rem 0.8rem 0.4rem;
+  text-align: right;
+  color: #6b7f74;
+  background: linear-gradient(180deg, rgba(212, 228, 214, 0.55), rgba(230, 239, 231, 0.7));
+  user-select: none;
+  overflow: hidden auto;
+  scrollbar-width: none;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+.line-numbers::-webkit-scrollbar {
+  display: none;
+}
+
+.editor-shell textarea {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  min-height: 420px;
+  height: auto;
+  line-height: 1.45;
+  outline: none;
+}
+
 .result-block + .result-block {
   margin-top: 0.8rem;
 }
 
 .result-block h3 {
   margin-bottom: 0.5rem;
+}
+
+.result-block pre {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(249, 251, 250, 0.92));
 }
 
 .badge {
@@ -228,6 +274,17 @@ textarea {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.6rem;
+}
+
+@media (max-width: 980px) {
+  .editor-shell {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .editor-shell textarea {
+    min-height: 320px;
+    height: auto;
+  }
 }
 
 .ast-toggle {

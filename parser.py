@@ -22,6 +22,7 @@ symbol_table = SymbolTable()
 parser_errors = []
 syntax_error_lines = set()
 active_parser = None
+current_source_code = ""
 
 precedence = (
     ('nonassoc', 'IFX'),
@@ -40,6 +41,16 @@ def _add_error_once(line, message):
     if line not in syntax_error_lines:
         parser_errors.append(message)
         syntax_error_lines.add(line)
+
+
+def _compute_column(line_no, lexpos):
+    if lexpos is None or line_no is None or line_no < 1:
+        return None
+    lines = current_source_code.splitlines(True)
+    if line_no > len(lines):
+        return None
+    start = sum(len(lines[i]) for i in range(line_no - 1))
+    return (lexpos - start) + 1
 
 # ============================================
 # Grammar Rules
@@ -207,6 +218,19 @@ def p_type(p):
     """type : INT
             | FLOAT"""
     p[0] = p[1]
+
+
+def p_type_unknown(p):
+    """type : ID"""
+    name = p[1]
+    line = p.lineno(1)
+    suggestion = difflib.get_close_matches(name, ["int", "float"], n=1, cutoff=0.6)
+    if suggestion:
+        _add_error_once(line, f"Line {line}: Unknown type name '{name}'. Did you mean '{suggestion[0]}'?")
+        p[0] = suggestion[0]
+    else:
+        _add_error_once(line, f"Line {line}: Unknown type name '{name}'. Supported types: int, float")
+        p[0] = 'int'
 
 def p_assignment(p):
     """assignment : ID ASSIGN expression SEMICOLON"""
@@ -408,9 +432,11 @@ def p_error(p):
 
     if p:
         line = p.lineno
+        col = _compute_column(line, getattr(p, "lexpos", None))
+        token_name = getattr(p, "type", "unknown")
         if line not in syntax_error_lines:
             error_msg = (
-                f"Line {line}: Syntax error near '{p.value}'. "
+                f"Line {line}{f', Col {col}' if col else ''}: Syntax error near '{p.value}' (token {token_name}). "
                 "Hint: end each statement with ';' and use valid forms like printf(\"text\");"
             )
             _add_error_once(line, error_msg)
@@ -444,12 +470,13 @@ def parse(code, lexer):
     Returns:
         Parsed statement list if successful, None if errors
     """
-    global parser_errors, symbol_table, syntax_error_lines, active_parser
+    global parser_errors, symbol_table, syntax_error_lines, active_parser, current_source_code
     
     # Reset for new parse
     parser_errors = []
     symbol_table = SymbolTable()
     syntax_error_lines = set()
+    current_source_code = code
     
     parser = build_parser()
     active_parser = parser

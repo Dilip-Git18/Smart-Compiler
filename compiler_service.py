@@ -255,8 +255,10 @@ def _generate_ir(ast):
 
 def _error_to_diagnostic(error_msg):
     lower = error_msg.lower()
-    line_match = re.search(r"Line\s+(\d+):", error_msg)
+    line_match = re.search(r"Line\s+(\d+)(?:,\s*Col\s*\d+)?:", error_msg)
     line = int(line_match.group(1)) if line_match else None
+    col_match = re.search(r"Col\s+(\d+)", error_msg)
+    col = int(col_match.group(1)) if col_match else None
 
     if "unsupported character" in lower:
         category = "Lexical"
@@ -291,10 +293,27 @@ def _error_to_diagnostic(error_msg):
 
     return {
         "line": line,
+        "col": col,
         "category": category,
         "message": error_msg,
         "hint": hint,
     }
+
+
+def _attach_source_context(diagnostic, source_lines):
+    line = diagnostic.get("line")
+    col = diagnostic.get("col")
+    if line is None or line < 1 or line > len(source_lines):
+        return diagnostic
+
+    code_line = source_lines[line - 1]
+    pointer_col = col if col is not None and col > 0 else 1
+    pointer = " " * (pointer_col - 1) + "^"
+
+    enriched = dict(diagnostic)
+    enriched["codeLine"] = code_line
+    enriched["pointer"] = pointer
+    return enriched
 
 
 def _find_unsupported_construct_errors(source_code):
@@ -317,12 +336,18 @@ def compile_source(source_code, trace=False):
     """Compile source text and return a structured result."""
     unsupported_errors = _find_unsupported_construct_errors(source_code)
     if unsupported_errors:
-        diagnostics = [_error_to_diagnostic(err) for err in unsupported_errors]
+        source_lines = source_code.splitlines()
+        error_diagnostics = [
+            _attach_source_context(_error_to_diagnostic(err), source_lines)
+            for err in unsupported_errors
+        ]
         return {
             "success": False,
             "errors": unsupported_errors,
             "warnings": [],
-            "diagnostics": diagnostics,
+            "diagnostics": error_diagnostics,
+            "errorDiagnostics": error_diagnostics,
+            "warningDiagnostics": [],
             "tokens": [],
             "symbols": {},
             "ast": [],
@@ -368,8 +393,16 @@ def compile_source(source_code, trace=False):
 
     errors = lexer_errors + semantic_and_parser_errors + runtime_errors
     warnings = lexer_warnings + semantic_warnings
-    diagnostics = [_error_to_diagnostic(err) for err in errors]
-    diagnostics.extend(_error_to_diagnostic(warn) for warn in warnings)
+    source_lines = source_code.splitlines()
+    error_diagnostics = [
+        _attach_source_context(_error_to_diagnostic(err), source_lines)
+        for err in errors
+    ]
+    warning_diagnostics = [
+        _attach_source_context(_error_to_diagnostic(warn), source_lines)
+        for warn in warnings
+    ]
+    diagnostics = error_diagnostics + warning_diagnostics
 
     stages = [
         {
@@ -404,6 +437,8 @@ def compile_source(source_code, trace=False):
         "errors": errors,
         "warnings": warnings,
         "diagnostics": diagnostics,
+        "errorDiagnostics": error_diagnostics,
+        "warningDiagnostics": warning_diagnostics,
         "tokens": tokens,
         "symbols": symbols,
         "ast": parsed_program if parsed_program else [],
