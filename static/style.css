@@ -16,12 +16,18 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
   background: linear-gradient(140deg, var(--bg-1), var(--bg-2));
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .background-layer {
@@ -37,10 +43,27 @@ body {
 .layout {
   position: relative;
   z-index: 1;
-  max-width: 1280px;
+  max-width: 1680px;
+  width: calc(100% - 1rem);
   margin: 0 auto;
-  padding: 2rem 1rem 2.5rem;
+  padding: 0.75rem 0.3rem 2rem;
   animation: fade-in 450ms ease-out;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.page-details {
+  margin: 0.25rem 0 1rem;
+  padding: 0.9rem 0.1rem 0.95rem;
+  border-bottom: 1px solid rgba(173, 200, 181, 0.55);
+  flex: 0 0 auto;
+}
+
+.page-details h2 {
+  margin: 0.2rem 0 0.3rem;
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
 }
 
 .hero {
@@ -63,24 +86,37 @@ h1 {
   line-height: 1.1;
 }
 
-.subtitle {
-  margin: 0;
-  max-width: 780px;
-  color: var(--ink-soft);
+.feature-rail-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-rail-card {
+  position: sticky;
+  top: 0;
+  gap: 1rem;
+  overflow: auto;
 }
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 1rem;
-  margin-top: 1.2rem;
+  grid-template-columns: 360px minmax(0, 1fr) 430px;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
 }
 
-.inspector-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
+.editor-panel,
+.result-panel,
+.feature-rail-card {
+  height: 100%;
+}
+
+.editor-panel,
+.result-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .panel {
@@ -90,6 +126,7 @@ h1 {
   backdrop-filter: blur(4px);
   box-shadow: 0 12px 28px rgba(21, 44, 33, 0.1);
   padding: 1rem;
+  min-height: 0;
 }
 
 .panel-head {
@@ -103,6 +140,12 @@ h1 {
 .panel h2,
 .panel h3 {
   margin: 0;
+}
+
+.site-details-left {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(173, 200, 181, 0.6);
 }
 
 .hint {
@@ -195,6 +238,8 @@ textarea {
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .line-numbers {
@@ -211,6 +256,8 @@ textarea {
   scrollbar-width: none;
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
+  max-height: none;
+  min-height: 0;
 }
 
 .line-numbers::-webkit-scrollbar {
@@ -222,10 +269,13 @@ textarea {
   border-radius: 0;
   margin: 0;
   background: transparent;
-  min-height: 420px;
-  height: auto;
+  min-height: 0;
+  height: 100%;
   line-height: 1.45;
   outline: none;
+  max-height: none;
+  resize: none;
+  overflow: auto;
 }
 
 .result-block + .result-block {
@@ -269,6 +319,163 @@ textarea {
   grid-column: 1 / -1;
 }
 
+.site-details {
+  border-bottom: 1px solid rgba(173, 200, 181, 0.6);
+  padding-bottom: 0.8rem;
+}
+
+.site-copy {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.feature-nav-wrap h3 {
+  margin-bottom: 0.7rem;
+}
+
+.feature-nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.feature-link {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.feature-link.active {
+  background: linear-gradient(180deg, rgba(10, 122, 86, 0.14), rgba(10, 122, 86, 0.08));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.feature-output {
+  border-top: 1px solid rgba(173, 200, 181, 0.55);
+  padding-top: 0.9rem;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.feature-view-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.feature-output pre {
+  max-height: 320px;
+}
+
+.feature-kicker {
+  margin: 0 0 0.2rem 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.feature-subtitle {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.feature-panel {
+  display: none;
+}
+
+.feature-panel.active {
+  display: block;
+}
+
+.result-cards {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.result-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.62rem 0.75rem;
+}
+
+.result-card-title {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.16rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.result-card-value {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.9rem;
+}
+
+.ast-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(9, 20, 14, 0.72);
+  backdrop-filter: blur(8px);
+  padding: 1rem;
+}
+
+.ast-preview.hidden {
+  display: none;
+}
+
+.ast-preview-card {
+  width: min(1200px, 100%);
+  height: min(100%, 92vh);
+  margin: 0 auto;
+  background: rgba(250, 252, 250, 0.98);
+  border: 1px solid rgba(173, 200, 181, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ast-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ast-preview-toggle {
+  justify-content: flex-start;
+}
+
+.ast-preview-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+}
+
+.ast-preview-body .mermaid-box,
+.ast-preview-body pre {
+  min-height: 100%;
+  max-height: none;
+}
+
+.ast-preview-body pre {
+  overflow: auto;
+}
+
 .ast-head {
   display: flex;
   align-items: center;
@@ -277,13 +484,41 @@ textarea {
 }
 
 @media (max-width: 980px) {
+  body {
+    overflow: auto;
+  }
+
+  .layout {
+    height: auto;
+    min-height: 100vh;
+  }
+
   .editor-shell {
     grid-template-columns: 44px 1fr;
   }
 
   .editor-shell textarea {
-    min-height: 320px;
+    min-height: 420px;
     height: auto;
+    resize: vertical;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    flex: 0 0 auto;
+  }
+
+  .editor-panel,
+  .result-panel,
+  .feature-rail-card {
+    min-height: auto;
+    height: auto;
+  }
+
+  .feature-rail-card {
+    position: static;
+    max-height: none;
   }
 }
 
@@ -314,7 +549,7 @@ textarea {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .stage-ok {
@@ -341,8 +576,7 @@ textarea {
 }
 
 @media (max-width: 980px) {
-  .workspace-grid,
-  .inspector-grid {
+  .workspace-grid {
     grid-template-columns: 1fr;
   }
 

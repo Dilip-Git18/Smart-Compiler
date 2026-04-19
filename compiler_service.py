@@ -12,6 +12,7 @@ from executor import execute_program
 
 def format_source_code(source_code):
     """Lightweight formatter for ClearCom code."""
+    source_code = "" if source_code is None else str(source_code)
     text = source_code.replace("\t", "    ")
     # Normalize operator spacing (keeps decimals and strings untouched in most cases).
     text = re.sub(r"\s*([=+\-*/%<>!,])\s*", r" \1 ", text)

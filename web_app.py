@@ -31,6 +31,7 @@ def add_no_cache_headers(response):
 def api_compile():
     payload = request.get_json(silent=True) or {}
     source_code = payload.get("source", "")
+    source_code = "" if source_code is None else str(source_code)
     trace_mode = bool(payload.get("trace", False))
 
     if not source_code.strip():
@@ -44,6 +45,7 @@ def api_compile():
 def api_format():
     payload = request.get_json(silent=True) or {}
     source_code = payload.get("source", "")
+    source_code = "" if source_code is None else str(source_code)
 
     if not source_code.strip():
         return jsonify({"success": False, "errors": ["No source code provided."]}), 400

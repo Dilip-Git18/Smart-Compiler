@@ -3,8 +3,8 @@ const compileBtn = document.getElementById("compileBtn");
 const clearBtn = document.getElementById("clearBtn");
 const exampleBtn = document.getElementById("exampleBtn");
 const formatBtn = document.getElementById("formatBtn");
+const saveBtn = document.getElementById("saveBtn");
 const fileUpload = document.getElementById("fileUpload");
-const traceMode = document.getElementById("traceMode");
 const lineNumbers = document.getElementById("lineNumbers");
 
 const statusBadge = document.getElementById("statusBadge");
@@ -20,9 +20,34 @@ const irBox = document.getElementById("irBox");
 const astDiagram = document.getElementById("astDiagram");
 const astRawBtn = document.getElementById("astRawBtn");
 const astDiagramBtn = document.getElementById("astDiagramBtn");
+const astPreview = document.getElementById("astPreview");
+const astCloseBtn = document.getElementById("astCloseBtn");
+const featureLinks = document.querySelectorAll(".feature-link");
+const featurePanels = {
+  pipeline: document.getElementById("featurePipeline"),
+  warnings: document.getElementById("featureWarnings"),
+  trace: document.getElementById("featureTrace"),
+  symbols: document.getElementById("featureSymbols"),
+  tokens: document.getElementById("featureTokens"),
+  ir: document.getElementById("featureIr"),
+};
+const featureTitle = document.getElementById("featureTitle");
+const featureSubtitle = document.getElementById("featureSubtitle");
 
 let currentAstMermaid = "";
 let astMode = "raw";
+
+const FEATURE_META = {
+  pipeline: { title: "Compiler Pipeline", subtitle: "Lexical, parsing, semantic, IR and execution summary." },
+  warnings: { title: "Warnings", subtitle: "Typo hints and unused-variable warnings." },
+  trace: { title: "Execution Trace", subtitle: "Step-by-step runtime trace when Trace is enabled." },
+  symbols: { title: "Symbol Table", subtitle: "Declared variables and runtime values." },
+  tokens: { title: "Tokens", subtitle: "Token stream emitted by the lexer." },
+  ast: { title: "AST", subtitle: "Raw tree or Mermaid diagram view." },
+  ir: { title: "Intermediate Representation", subtitle: "Three-address style IR generated from the AST." },
+};
+
+let activeFeature = "pipeline";
 
 const EXAMPLE_CODE = `int total;
 float tax;
@@ -50,12 +75,10 @@ function updateLineNumbers() {
 }
 
 function resizeEditor() {
-  sourceInput.style.height = "auto";
-  lineNumbers.style.height = "auto";
-
-  const nextHeight = Math.max(sourceInput.scrollHeight, 420);
-  sourceInput.style.height = `${nextHeight}px`;
-  lineNumbers.style.height = `${nextHeight}px`;
+  const h = sourceInput.clientHeight;
+  if (h > 0) {
+    lineNumbers.style.height = `${h}px`;
+  }
 }
 
 function setEditorValue(value) {
@@ -145,6 +168,47 @@ function syncAstMode() {
   astDiagramBtn.classList.toggle("active", !showRaw);
 }
 
+function setActiveFeature(featureName) {
+  activeFeature = featureName;
+
+  featureLinks.forEach((link) => {
+    link.classList.toggle("active", link.dataset.feature === featureName);
+  });
+
+  Object.entries(featurePanels).forEach(([name, panel]) => {
+    if (panel) {
+      panel.classList.toggle("active", name === featureName);
+    }
+  });
+
+  const meta = FEATURE_META[featureName] || FEATURE_META.pipeline;
+  featureTitle.textContent = meta.title;
+  featureSubtitle.textContent = meta.subtitle;
+
+  if (featureName === "ast") {
+    openAstPreview();
+  }
+}
+
+function openAstPreview() {
+  astPreview.classList.remove("hidden");
+  astMode = "diagram";
+  syncAstMode();
+  renderAstDiagram(currentAstMermaid);
+}
+
+function closeAstPreview() {
+  astPreview.classList.add("hidden");
+}
+
+function toggleAstPreviewMode(mode) {
+  astMode = mode;
+  syncAstMode();
+  if (mode === "diagram") {
+    renderAstDiagram(currentAstMermaid);
+  }
+}
+
 function renderDiagnostics(diagnostics) {
   if (!diagnostics || !diagnostics.length) {
     return "No errors.";
@@ -223,7 +287,7 @@ async function compileSource() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ source, trace: traceMode.checked }),
+      body: JSON.stringify({ source, trace: false }),
     });
 
     const result = await response.json();
@@ -239,6 +303,21 @@ async function compileSource() {
     setBadge("Failed", "error");
     errorBox.textContent = `Request error: ${error.message}`;
   }
+}
+
+function saveSourceAsMc() {
+  const source = sourceInput.value || "";
+  const blob = new Blob([source], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "program.mc";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+
+  URL.revokeObjectURL(url);
 }
 
 async function formatSource() {
@@ -267,6 +346,7 @@ async function formatSource() {
 
 compileBtn.addEventListener("click", compileSource);
 formatBtn.addEventListener("click", formatSource);
+saveBtn.addEventListener("click", saveSourceAsMc);
 
 sourceInput.addEventListener("input", updateLineNumbers);
 sourceInput.addEventListener("scroll", syncLineNumberScroll);
@@ -294,6 +374,11 @@ sourceInput.addEventListener("drop", () => setTimeout(() => {
   updateLineNumbers();
   resizeEditor();
 }, 0));
+
+window.addEventListener("resize", () => {
+  resizeEditor();
+  syncLineNumberScroll();
+});
 
 clearBtn.addEventListener("click", () => {
   setEditorValue("");
@@ -331,15 +416,38 @@ fileUpload.addEventListener("change", (event) => {
 });
 
 astRawBtn.addEventListener("click", () => {
-  astMode = "raw";
-  syncAstMode();
+  toggleAstPreviewMode("raw");
 });
 
 astDiagramBtn.addEventListener("click", async () => {
-  astMode = "diagram";
-  syncAstMode();
-  await renderAstDiagram(currentAstMermaid);
+  toggleAstPreviewMode("diagram");
+});
+
+astCloseBtn.addEventListener("click", closeAstPreview);
+
+astPreview.addEventListener("click", (event) => {
+  if (event.target === astPreview) {
+    closeAstPreview();
+  }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeAstPreview();
+  }
+});
+
+featureLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    if (link.dataset.feature === "ast") {
+      openAstPreview();
+      return;
+    }
+    closeAstPreview();
+    setActiveFeature(link.dataset.feature);
+  });
 });
 
 updateLineNumbers();
 resizeEditor();
+setActiveFeature("pipeline");

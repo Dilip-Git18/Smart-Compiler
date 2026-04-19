@@ -12,13 +12,62 @@
 <body>
   <div class="background-layer"></div>
   <main class="layout">
-    <header class="hero">
-      <p class="tag">Mini C-like Language</p>
-      <h1>ClearCom Compiler Studio</h1>
-      <p class="subtitle">Write or upload .mc code, compile instantly, and inspect symbols, tokens, AST, and runtime output.</p>
-    </header>
+    <section class="page-details" aria-label="Website details">
+      <p class="feature-kicker">Website Details</p>
+      <h2>ClearCom Compiler Studio</h2>
+      <p class="site-copy">A mini C-like compiler workspace with editor, runtime output, diagnostics, AST, IR, and trace support.</p>
+    </section>
 
     <section class="workspace-grid">
+      <aside class="panel feature-rail-card">
+        <div class="feature-nav-wrap">
+          <h3>Features</h3>
+          <nav class="feature-nav" aria-label="Compiler feature navigation">
+            <button class="feature-link active" type="button" data-feature="pipeline">Compiler Pipeline</button>
+            <button class="feature-link" type="button" data-feature="warnings">Warnings</button>
+            <button class="feature-link" type="button" data-feature="trace">Execution Trace</button>
+            <button class="feature-link" type="button" data-feature="symbols">Symbol Table</button>
+            <button class="feature-link" type="button" data-feature="tokens">Tokens</button>
+            <button class="feature-link" type="button" data-feature="ast">AST</button>
+            <button class="feature-link" type="button" data-feature="ir">Intermediate Representation</button>
+          </nav>
+        </div>
+
+        <div class="feature-output" aria-live="polite">
+          <div class="feature-view-head">
+            <div>
+              <p class="feature-kicker">Feature Result</p>
+              <h3 id="featureTitle">Compiler Pipeline</h3>
+            </div>
+            <span class="feature-subtitle" id="featureSubtitle">See the selected compiler artifact here.</span>
+          </div>
+
+          <section id="featurePipeline" class="feature-panel active">
+            <pre id="stageBox">No stage data yet.</pre>
+          </section>
+
+          <section id="featureWarnings" class="feature-panel">
+            <pre id="warningBox">No warnings.</pre>
+          </section>
+
+          <section id="featureTrace" class="feature-panel">
+            <pre id="traceBox">Trace is empty.</pre>
+          </section>
+
+          <section id="featureSymbols" class="feature-panel">
+            <pre id="symbolBox">No symbols yet.</pre>
+          </section>
+
+          <section id="featureTokens" class="feature-panel">
+            <pre id="tokenBox">No tokens yet.</pre>
+          </section>
+
+          <section id="featureIr" class="feature-panel">
+            <pre id="irBox">No IR yet.</pre>
+          </section>
+        </div>
+      </aside>
+
       <article class="panel editor-panel">
         <div class="panel-head">
           <h2>Source Editor</h2>
@@ -26,16 +75,13 @@
         </div>
 
         <div class="toolbar">
-          <label class="upload-btn" for="fileUpload">Upload .mc file</label>
+          <label class="upload-btn" for="fileUpload">Upload file</label>
           <input id="fileUpload" type="file" accept=".mc,.txt">
           <button id="exampleBtn" type="button">Load Example</button>
           <button id="formatBtn" type="button">Format Code</button>
+          <button id="saveBtn" type="button">Save</button>
           <button id="clearBtn" type="button">Clear</button>
           <button id="compileBtn" type="button" class="primary">Compile</button>
-          <label class="trace-toggle" for="traceMode">
-            <input id="traceMode" type="checkbox">
-            Trace
-          </label>
         </div>
 
         <div class="editor-shell">
@@ -51,11 +97,6 @@
         </div>
 
         <section class="result-block">
-          <h3>Compiler Pipeline</h3>
-          <pre id="stageBox">No stage data yet.</pre>
-        </section>
-
-        <section class="result-block">
           <h3>Program Output</h3>
           <pre id="outputBox">No output yet.</pre>
         </section>
@@ -64,45 +105,29 @@
           <h3>Errors</h3>
           <pre id="errorBox">No errors.</pre>
         </section>
-
-        <section class="result-block">
-          <h3>Warnings</h3>
-          <pre id="warningBox">No warnings.</pre>
-        </section>
-
-        <section class="result-block">
-          <h3>Execution Trace</h3>
-          <pre id="traceBox">Trace is empty.</pre>
-        </section>
-      </article>
-    </section>
-
-    <section class="inspector-grid">
-      <article class="panel">
-        <h3>Symbol Table</h3>
-        <pre id="symbolBox">No symbols yet.</pre>
-      </article>
-      <article class="panel">
-        <h3>Tokens</h3>
-        <pre id="tokenBox">No tokens yet.</pre>
-      </article>
-      <article class="panel full-span">
-        <div class="ast-head">
-          <h3>AST</h3>
-          <div class="ast-toggle">
-            <button id="astRawBtn" type="button" class="small-btn active">Raw</button>
-            <button id="astDiagramBtn" type="button" class="small-btn">Diagram</button>
-          </div>
-        </div>
-        <pre id="astBox">No AST yet.</pre>
-        <div id="astDiagram" class="mermaid-box hidden">No AST diagram yet.</div>
-      </article>
-      <article class="panel full-span">
-        <h3>Intermediate Representation (IR)</h3>
-        <pre id="irBox">No IR yet.</pre>
       </article>
     </section>
   </main>
+
+  <div id="astPreview" class="ast-preview hidden" role="dialog" aria-modal="true" aria-labelledby="astPreviewTitle">
+    <div class="ast-preview-card">
+      <div class="ast-preview-header">
+        <div>
+          <p class="feature-kicker">AST Preview</p>
+          <h2 id="astPreviewTitle">Full Screen AST</h2>
+        </div>
+        <button id="astCloseBtn" type="button" class="small-btn">Close</button>
+      </div>
+      <div class="ast-toggle ast-preview-toggle">
+        <button id="astRawBtn" type="button" class="small-btn active">Raw</button>
+        <button id="astDiagramBtn" type="button" class="small-btn">Diagram</button>
+      </div>
+      <div class="ast-preview-body">
+        <pre id="astBox">No AST yet.</pre>
+        <div id="astDiagram" class="mermaid-box hidden">No AST diagram yet.</div>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script src="{{ url_for('static', filename='app.js', v=asset_version) }}"></script>

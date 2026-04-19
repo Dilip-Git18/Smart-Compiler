@@ -1,0 +1,264 @@
+ClearCom Final Runnable Programs Pack
+
+How to use:
+1. Copy one program at a time from inside [CODE] ... [/CODE].
+2. Paste into the ClearCom editor.
+3. Click Compile.
+
+============================================================
+PROGRAM 01 - Basic Declarations And Output
+============================================================
+[CODE]
+int a;
+float b;
+a = 10;
+b = 2.5;
+print("a=", a);
+print("b=", b);
+[/CODE]
+
+============================================================
+PROGRAM 02 - Arithmetic And Precedence
+============================================================
+[CODE]
+int x;
+int y;
+int z;
+x = 8;
+y = 3;
+z = x + y * 2;
+print("z=", z);
+z = (x + y) * 2;
+print("z2=", z);
+[/CODE]
+
+============================================================
+PROGRAM 03 - Division And Modulo
+============================================================
+[CODE]
+int a;
+int b;
+float q;
+int r;
+a = 23;
+b = 5;
+q = a / b;
+r = a % b;
+print("quotient=", q);
+print("remainder=", r);
+[/CODE]
+
+============================================================
+PROGRAM 04 - printf And print Variants
+============================================================
+[CODE]
+int n;
+n = 42;
+printf("Using printf with expression", n);
+printf("n=%d", n);
+print("Using print with label", n);
+print(n);
+[/CODE]
+
+============================================================
+PROGRAM 05 - Comparison Operators
+============================================================
+[CODE]
+int a;
+int b;
+a = 7;
+b = 9;
+print("a<b", a < b);
+print("a<=b", a <= b);
+print("a>b", a > b);
+print("a>=b", a >= b);
+print("a==b", a == b);
+print("a!=b", a != b);
+[/CODE]
+
+============================================================
+PROGRAM 06 - if Statement (No else)
+============================================================
+[CODE]
+int score;
+score = 81;
+if (score > 50) {
+    print("Pass", score);
+}
+print("Done", score);
+[/CODE]
+
+============================================================
+PROGRAM 07 - if else Statement
+============================================================
+[CODE]
+int temp;
+temp = 34;
+if (temp >= 35) {
+    print("Hot", temp);
+} else {
+    print("Pleasant", temp);
+}
+[/CODE]
+
+============================================================
+PROGRAM 08 - while Loop (Sum 1 To 5)
+============================================================
+[CODE]
+int i;
+int sum;
+i = 1;
+sum = 0;
+while (i <= 5) {
+    sum = sum + i;
+    i = i + 1;
+}
+print("sum=", sum);
+[/CODE]
+
+============================================================
+PROGRAM 09 - for Loop With Declaration Init And i++
+============================================================
+[CODE]
+int total;
+total = 0;
+for (int i = 1; i <= 5; i++) {
+    total = total + i;
+}
+print("for total=", total);
+[/CODE]
+
+============================================================
+PROGRAM 10 - for Loop With Assignment Update
+============================================================
+[CODE]
+int i;
+int product;
+i = 1;
+product = 1;
+for (i = 1; i <= 4; i = i + 1) {
+    product = product * i;
+}
+print("product=", product);
+[/CODE]
+
+============================================================
+PROGRAM 11 - for Loop With Empty Init
+============================================================
+[CODE]
+int i;
+int s;
+i = 3;
+s = 0;
+for (; i <= 7; i++) {
+    s = s + i;
+}
+print("s=", s);
+[/CODE]
+
+============================================================
+PROGRAM 12 - for Loop With -- Update
+============================================================
+[CODE]
+int i;
+int c;
+c = 0;
+for (i = 5; i > 0; i--) {
+    c = c + 2;
+}
+print("c=", c);
+[/CODE]
+
+============================================================
+PROGRAM 13 - Nested Loops
+============================================================
+[CODE]
+int i;
+int j;
+int count;
+count = 0;
+for (i = 1; i <= 3; i++) {
+    for (j = 1; j <= 2; j++) {
+        count = count + 1;
+        print("pair count", count);
+    }
+}
+print("final count", count);
+[/CODE]
+
+============================================================
+PROGRAM 14 - float Math Program
+============================================================
+[CODE]
+float principal;
+float rate;
+float time;
+float si;
+principal = 1000;
+rate = 5;
+time = 2;
+si = (principal * rate * time) / 100;
+print("simple interest=", si);
+[/CODE]
+
+============================================================
+PROGRAM 15 - int main Wrapper Program
+============================================================
+[CODE]
+int main() {
+    int a;
+    int b;
+    a = 12;
+    b = 8;
+    if (a > b) {
+        print("a bigger", a);
+    } else {
+        print("b bigger", b);
+    }
+}
+[/CODE]
+
+============================================================
+PROGRAM 16 - C-style Address Arguments (Supported)
+============================================================
+[CODE]
+int x;
+x = 55;
+printf("x via &x = %d", &x);
+print("x via &x", &x);
+[/CODE]
+
+============================================================
+PROGRAM 17 - Comments And Preprocessor Lines
+============================================================
+[CODE]
+#include <stdio.h>
+/* Block comment is ignored */
+int a;
+a = 9; // single line comment
+print("a=", a);
+[/CODE]
+
+============================================================
+PROGRAM 18 - Mixed Realistic Program
+============================================================
+[CODE]
+int n;
+int i;
+int even_sum;
+int odd_sum;
+n = 10;
+i = 1;
+even_sum = 0;
+odd_sum = 0;
+while (i <= n) {
+    if ((i % 2) == 0) {
+        even_sum = even_sum + i;
+    } else {
+        odd_sum = odd_sum + i;
+    }
+    i = i + 1;
+}
+printf("even sum", even_sum);
+printf("odd sum", odd_sum);
+[/CODE]
