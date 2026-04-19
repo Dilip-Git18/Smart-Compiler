@@ -16,6 +16,10 @@ tokens = (
     'INT',
     'FLOAT',
     'MAIN',
+    'IF',
+    'ELSE',
+    'WHILE',
+    'FOR',
     'PRINTF',
     'PRINT',
     'ID',
@@ -26,9 +30,18 @@ tokens = (
     'TIMES',
     'DIVIDE',
     'MODULO',
+    'LT',
+    'LE',
+    'GT',
+    'GE',
+    'EQ',
+    'NE',
+    'INC',
+    'DEC',
     'ASSIGN',
     'SEMICOLON',
     'COMMA',
+    'AMP',
     'LPAREN',
     'RPAREN',
     'LBRACE',
@@ -40,19 +53,32 @@ reserved = {
     'int': 'INT',
     'float': 'FLOAT',
     'main': 'MAIN',
+    'if': 'IF',
+    'else': 'ELSE',
+    'while': 'WHILE',
+    'for': 'FOR',
     'printf': 'PRINTF',
     'print': 'PRINT',
 }
 
 # Token rules (longer patterns first)
+t_INC = r'\+\+'
+t_DEC = r'--'
+t_LE = r'<='
+t_GE = r'>='
+t_EQ = r'=='
+t_NE = r'!='
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
 t_MODULO = r'%'
+t_LT = r'<'
+t_GT = r'>'
 t_ASSIGN = r'='
 t_SEMICOLON = r';'
 t_COMMA = r','
+t_AMP = r'&'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACE = r'\{'

@@ -46,10 +46,17 @@ Then close all terminals and open a new terminal in VS Code so activation is app
 ./.venv/bin/python interactive.py
 ```
 
+**Option C: Launch Web Compiler Studio**
+```bash
+./.venv/bin/python web_app.py
+```
+Then open: http://127.0.0.1:5000
+
 If you activated venv, equivalent commands are:
 ```bash
 python main.py input.mc
 python interactive.py
+python web_app.py
 ```
 
 ---

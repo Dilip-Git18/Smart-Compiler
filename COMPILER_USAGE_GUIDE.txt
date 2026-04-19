@@ -1,0 +1,98 @@
+CLEARCOM COMPILER USAGE GUIDE
+=====================================
+
+1) HOW TO RUN
+-------------------------------------
+A) Compile file mode:
+   ./.venv/bin/python main.py input.mc
+
+B) Interactive terminal mode:
+   ./.venv/bin/python interactive.py
+
+C) Web UI mode:
+   ./.venv/bin/python web_app.py
+   Open browser: http://127.0.0.1:5000
+
+
+2) WHAT PROGRAMS CAN RUN
+-------------------------------------
+Supported program styles:
+- Plain statement list:
+    int a;
+    float b;
+    a = 5;
+    b = a + 2;
+    print(a);
+    printf("sum=%d", a);
+
+- C-style wrapper is accepted:
+    #include<stdio.h>
+    int main(){
+      int a = 2;
+      int b = 3;
+      int c = a + b;
+      printf("%d", c);
+    }
+
+Supported features:
+- Data types: int, float
+- Declarations: int a; float x;
+- Initialized declarations: int a = 2; float x = 2.5;
+- Assignments: a = 10;
+- Arithmetic: + - * / %
+- Comparisons: < <= > >= == !=
+- Grouping: (a + b)
+- Output: print(expr), printf("text"), printf("%d", expr), printf("%f", expr)
+- Lenient printf argument: printf("%d", &a) is accepted
+- if/else statements
+- while loops
+- for loops
+
+Control-flow examples:
+    int a = 5;
+    if (a > 3) {
+      print(1);
+    } else {
+      print(0);
+    }
+
+    int i = 0;
+    while (i < 3) {
+      print(i);
+      i = i + 1;
+    }
+
+    int sum = 0;
+    int j;
+    for (j = 0; j < 5; j = j + 1) {
+      sum = sum + j;
+    }
+    printf("%d", sum);
+
+
+3) WHAT IS NOT SUPPORTED YET
+-------------------------------------
+- scanf
+- arrays, pointers, structs, user-defined functions
+
+If you use unsupported constructs (for example scanf(...)), compiler shows one clear message like:
+  Unsupported construct 'scanf'
+
+
+4) COMMON FIXES
+-------------------------------------
+- Add semicolon at end of each statement.
+- Declare variable before use.
+- Use only print/printf for output.
+- Fix misspelled function names (example: prinrtf -> printf).
+- For format printing, use:
+    printf("%d", a);
+  not scanf style input usage.
+
+
+5) QUICK VALID EXAMPLE
+-------------------------------------
+int a=2;
+int b=2;
+int c = a+b;
+printf("%d", c);

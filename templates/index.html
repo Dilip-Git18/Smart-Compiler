@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearCom Compiler Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="background-layer"></div>
+  <main class="layout">
+    <header class="hero">
+      <p class="tag">Mini C-like Language</p>
+      <h1>ClearCom Compiler Studio</h1>
+      <p class="subtitle">Write or upload .mc code, compile instantly, and inspect symbols, tokens, AST, and runtime output.</p>
+    </header>
+
+    <section class="workspace-grid">
+      <article class="panel editor-panel">
+        <div class="panel-head">
+          <h2>Source Editor</h2>
+          <span class="hint">Supports declarations, assignments, expressions, print/printf.</span>
+        </div>
+
+        <div class="toolbar">
+          <label class="upload-btn" for="fileUpload">Upload .mc file</label>
+          <input id="fileUpload" type="file" accept=".mc,.txt">
+          <button id="exampleBtn" type="button">Load Example</button>
+          <button id="clearBtn" type="button">Clear</button>
+          <button id="compileBtn" type="button" class="primary">Compile</button>
+        </div>
+
+        <textarea id="sourceInput" spellcheck="false" placeholder="int a;\nfloat b;\na = 5;\nprintf(\"a=%d\", a);"></textarea>
+      </article>
+
+      <article class="panel result-panel">
+        <div class="panel-head">
+          <h2>Compile Result</h2>
+          <span id="statusBadge" class="badge idle">Idle</span>
+        </div>
+
+        <section class="result-block">
+          <h3>Program Output</h3>
+          <pre id="outputBox">No output yet.</pre>
+        </section>
+
+        <section class="result-block">
+          <h3>Errors</h3>
+          <pre id="errorBox">No errors.</pre>
+        </section>
+      </article>
+    </section>
+
+    <section class="inspector-grid">
+      <article class="panel">
+        <h3>Symbol Table</h3>
+        <pre id="symbolBox">No symbols yet.</pre>
+      </article>
+      <article class="panel">
+        <h3>Tokens</h3>
+        <pre id="tokenBox">No tokens yet.</pre>
+      </article>
+      <article class="panel full-span">
+        <h3>AST</h3>
+        <pre id="astBox">No AST yet.</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
